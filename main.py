@@ -60,7 +60,7 @@ if __name__=='__main__':
 
     for i in range(epochs):
         for j in range(2):
-            train_df = train_df.sample(frac=1).reset_index(drop=True)
+            train_df = train_df.sample(frac=1).reset_index(drop=True) #if not reset_index, has issues with concatenation below
         for k in range(0, len(train_df), limit):
             try:
                 new_train_df = train_df.iloc[k:k+limit,:]
@@ -73,7 +73,7 @@ if __name__=='__main__':
             print(onehot_df.shape)
            
             #merge the columns together into 1 dataframe
-            #f_train_df = pd.concat([new_train_df, onehot_df],axis=1, sort=False)
+            f_train_df = pd.concat([new_train_df, onehot_df],axis=1, sort=False)
             #print(new_train_df.columns.values) 
 
             #arch_2.run(new_train_df, test_df)
