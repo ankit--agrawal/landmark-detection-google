@@ -56,7 +56,7 @@ if __name__=='__main__':
     #print(test_df.columns.values)
 
     arch_2 = cnn_architecture(1e-3,mode='other', output_neurons=num) #using the same object for every mini-batch ensures that the same model trains
-    epochs = 2; limit = 50;
+    epochs = 2; limit = 6000;
 
     for i in range(epochs):
         for j in range(2):
