@@ -70,6 +70,7 @@ if __name__=='__main__':
             #the following section creates new columns for one hot encoding
             encode = to_categorical(new_train_df['landmark_id'].tolist(),num).tolist()
             onehot_df = pd.DataFrame(encode)
+            print(encode[0].index(1), onehot_df[encode[0].index(1)].iloc[0])
             print(onehot_df.shape)
            
             #merge the columns together into 1 dataframe
