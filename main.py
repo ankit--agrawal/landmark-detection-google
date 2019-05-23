@@ -9,15 +9,6 @@ from tensorflow.keras.utils import to_categorical
 from sklearn.preprocessing import MultiLabelBinarizer, OneHotEncoder
 
 
-def thresholding(x):
-    t = 0.98; val = -1;
-    if x >= t: val = 1;
-    else: val = 0;
-    return val
-
-def crazy(x):
-    pass
-
 def cate(x,num):
     encode = to_categorical(y=x-1,num_classes=num,dtype='int32')
     return encode.tolist()
@@ -56,7 +47,7 @@ if __name__=='__main__':
     num = train_df['landmark_id'].nunique()
     
     test = pd.read_csv('output.csv')
-    #test['final_predictions'] = test['predictions'].apply(lambda x: thresholding(x))
+    
     t = 0.98
     test['final_predictions'] = np.where(test['predictions']>=t, 1, 0)
     test_df = test.loc[test['final_predictions']==1] #images predicted as landmarks in stage 1
