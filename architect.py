@@ -89,13 +89,14 @@ class cnn_architecture():
                                                  target_size = (self.h,self.w),
                                                  batch_size = self.batch,
                                                  shuffle = True)
-
+        '''
         test_gen = test_datagen.flow_from_dataframe(dataframe = test,
                                            directory = test_dir,
                                            x_col = 'path',
                                            target_size = (self.h, self.w),
                                            batch_size = self.batch,
                                            class_mode = None, shuffle = False)
+        '''
 
         print('ended data pre-processing')
         return train_gen, val_gen, test_gen
@@ -134,7 +135,7 @@ class cnn_architecture():
                          validation_steps = VAL_STEPS_SIZE)
 
         classifier.evaluate_generator(generator=val_set, steps=VAL_STEPS_SIZE)
-        
+        '''
         test_set.reset()
 
         loaded_model = load_model('final_submission.h5')
@@ -152,4 +153,5 @@ class cnn_architecture():
         out = test
         out['predictions'] = pred
         out['final_predictions'] = out['predictions'].apply(lambda x: bin_to_dec(x))
-        out.to_csv('submission_output.csv',index=False) 
+        out.to_csv('submission_output.csv',index=False)i
+        '''
