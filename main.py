@@ -66,15 +66,8 @@ if __name__=='__main__':
                 new_train_df = train_df.iloc[k:k+limit,:]
             except:
                 new_train_df = train_df.iloc[k:,:]
-            #print(type(new_train_df['landmark_id'])
-            new_train_df['path'].astype(str, copy=False)
+
             #the following section creates new columns for one hot encoding
-            s = []
-            '''
-            for j in range(len(new_train_df)):
-                encode = to_categorical(new_train_df['landmark_id'].iloc[j], num)
-                s.append(encode.tolist())
-            '''
             encode = to_categorical(new_train_df['landmark_id'].tolist(),num).tolist()
             onehot_df = pd.DataFrame(encode)
             print(onehot_df.shape)
