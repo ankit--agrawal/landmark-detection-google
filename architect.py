@@ -119,7 +119,7 @@ class cnn_architecture():
 
         #load data generators
         #train_set, val_set, test_set = self.image_gen(train, test)
-        train_set, val_set = self.image(train,test)
+        train_set, val_set = self.image_gen(train,test)
         
         #setting step size
         TRAIN_STEPS_SIZE = train_set.n//train_set.batch_size

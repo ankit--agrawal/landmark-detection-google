@@ -1,7 +1,7 @@
 import os
 import pandas as pd
 os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID" 
-os.environ["CUDA_VISIBLE_DEVICES"] = "2"
+os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 from architect import cnn_architecture
 import tensorflow as tf
 import numpy as np
@@ -60,10 +60,13 @@ if __name__=='__main__':
     arch_2 = cnn_architecture(1e-3,mode='other', output_neurons=num) #using the same object for every mini-batch ensures that the same model trains
     epochs = 2; limit = 6000;
 
+    iterations = (len(train_df)//limit)+1
     for i in range(epochs):
         for j in range(2):
             train_df = train_df.sample(frac=1).reset_index(drop=True) #if not reset_index, has issues with concatenation below
-        for k in range(0, len(train_df), limit):
+        
+        for m,k in enumerate(range(0, len(train_df), limit)):
+            
             try:
                 new_train_df = train_df.iloc[k:k+limit,:]
             except:
@@ -79,5 +82,5 @@ if __name__=='__main__':
             f_train_df = pd.concat([new_train_df, onehot_df],axis=1, sort=False)
             #print(new_train_df.columns.values) 
             #print(f_train_df.shape)
-
-            arch_2.run(new_train_df, test_df)
+            print('Running epoch {0} iteration number {1} out of {2} iterations'.format(i,m,iterations))
+            arch_2.run(new_train_df, test)
