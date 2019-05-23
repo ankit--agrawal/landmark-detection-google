@@ -58,8 +58,8 @@ if __name__=='__main__':
     '''
 
     arch_2 = cnn_architecture(1e-3,mode='other', output_neurons=num) #using the same object for every mini-batch ensures that the same model trains
-    epochs = 2; limit = 6000;
-
+    epochs = 2; limit = 3000;
+    train_df.dropna(axis=0, inplace=True)
     iterations = (len(train_df)//limit)+1
     for i in range(epochs):
         for j in range(2):
@@ -82,5 +82,6 @@ if __name__=='__main__':
             f_train_df = pd.concat([new_train_df, onehot_df],axis=1, sort=False)
             #print(new_train_df.columns.values) 
             #print(f_train_df.shape)
+            #print(f_train_df.isnull().sum())
             print('Running epoch {0} iteration number {1} out of {2} iterations'.format(i,m,iterations))
-            arch_2.run(new_train_df, test)
+            arch_2.run(f_train_df, test)
