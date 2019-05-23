@@ -99,7 +99,8 @@ class cnn_architecture():
         '''
 
         print('ended data pre-processing')
-        return train_gen, val_gen, test_gen
+        #return train_gen, val_gen, test_gen
+        return train_gen, val_gen
 
     def run(self, train, test, l='categorical_crossentropy'):
         #stage = 1 or 2
@@ -117,7 +118,8 @@ class cnn_architecture():
         print(classifier.summary())
 
         #load data generators
-        train_set, val_set, test_set = self.image_gen(train, test)
+        #train_set, val_set, test_set = self.image_gen(train, test)
+        train_set, val_set = self.image(train,test)
         
         #setting step size
         TRAIN_STEPS_SIZE = train_set.n//train_set.batch_size
