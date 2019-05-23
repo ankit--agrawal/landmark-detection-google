@@ -48,12 +48,14 @@ if __name__=='__main__':
     
     test = pd.read_csv('output.csv')
     
+    '''uncomment this when trying to make predictions on test dataset
     t = 0.95
     test['final_predictions'] = np.where(test['predictions']>=t, 1, 0)
     test_df = test.loc[test['final_predictions']==1] #images predicted as landmarks in stage 1
     #print(test_df['final_predictions'].value_counts())
     print(len(test)-len(test_df))
     #print(test_df.columns.values)
+    '''
 
     arch_2 = cnn_architecture(1e-3,mode='other', output_neurons=num) #using the same object for every mini-batch ensures that the same model trains
     epochs = 2; limit = 6000;
