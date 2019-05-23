@@ -48,7 +48,7 @@ if __name__=='__main__':
     
     test = pd.read_csv('output.csv')
     
-    t = 0.98
+    t = 0.95
     test['final_predictions'] = np.where(test['predictions']>=t, 1, 0)
     test_df = test.loc[test['final_predictions']==1] #images predicted as landmarks in stage 1
     #print(test_df['final_predictions'].value_counts())
@@ -70,11 +70,12 @@ if __name__=='__main__':
             #the following section creates new columns for one hot encoding
             encode = to_categorical(new_train_df['landmark_id'].tolist(),num).tolist()
             onehot_df = pd.DataFrame(encode)
-            print(encode[0].index(1), onehot_df[encode[0].index(1)].iloc[0])
-            print(onehot_df.shape)
+            #print(encode[0].index(1), onehot_df[encode[0].index(1)].iloc[0])
+            #print(onehot_df.shape)
            
             #merge the columns together into 1 dataframe
             f_train_df = pd.concat([new_train_df, onehot_df],axis=1, sort=False)
             #print(new_train_df.columns.values) 
+            #print(f_train_df.shape)
 
-            #arch_2.run(new_train_df, test_df)
+            arch_2.run(new_train_df, test_df)
