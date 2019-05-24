@@ -1,7 +1,7 @@
 import os
 import pandas as pd
 os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID" 
-os.environ["CUDA_VISIBLE_DEVICES"] = "1"
+os.environ["CUDA_VISIBLE_DEVICES"] = "2"
 from architect import cnn_architecture
 import tensorflow as tf
 import numpy as np
@@ -59,7 +59,7 @@ if __name__=='__main__':
 
     arch_2 = cnn_architecture(1e-3,mode='other', output_neurons=num) #using the same object for every mini-batch ensures that the same model trains
     epochs = 2; limit = 3000;
-    train_df.dropna(axis=0, inplace=True)
+    
     iterations = (len(train_df)//limit)+1
     for i in range(epochs):
         for j in range(2):
@@ -68,10 +68,12 @@ if __name__=='__main__':
         for m,k in enumerate(range(0, len(train_df), limit)):
             
             try:
-                new_train_df = train_df.iloc[k:k+limit,:]
+                new_train_df = train_df.iloc[k:k+limit,:].reset_index(drop=True)
             except:
-                new_train_df = train_df.iloc[k:,:]
+                new_train_df = train_df.iloc[k:,:].reset_index(drop=True)
+            
 
+            print('Range of input {0} to {1}'.format(k, k+limit))
             #the following section creates new columns for one hot encoding
             encode = to_categorical(new_train_df['landmark_id'].tolist(),num).tolist()
             onehot_df = pd.DataFrame(encode)
@@ -83,5 +85,5 @@ if __name__=='__main__':
             #print(new_train_df.columns.values) 
             #print(f_train_df.shape)
             #print(f_train_df.isnull().sum())
-            print('Running epoch {0} iteration number {1} out of {2} iterations'.format(i,m,iterations))
+            print('Running epoch {0} iteration number {1} out of {2} iterations'.format(i+1,m+1,iterations))
             arch_2.run(f_train_df, test)

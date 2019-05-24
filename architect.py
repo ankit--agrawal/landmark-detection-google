@@ -20,9 +20,9 @@ def bin_to_dec(x):
 
 class cnn_architecture():
     def __init__(self, learn_rate, mode='binary', output_neurons=1):
-        self.h, self.w = 224, 224 #image height, width
+        self.h, self.w = 128, 128 #image height, width
         self.mode = mode
-        self.batch, self.epoc = 150, 1
+        self.batch, self.epoc = 100, 5
         self.lr = learn_rate
         self.last = output_neurons
 
@@ -43,9 +43,9 @@ class cnn_architecture():
         top_model = Sequential()
         top_model.add(Flatten(input_shape=model.output_shape[1:]))
         top_model.add(Dropout(0.5))
-        top_model.add(Dense(2000, activation='relu'))
-        top_model.add(Dropout(0.3))
-        #top_model.add(Dense(150, activation='relu'))
+        #top_model.add(Dense(500, activation='relu'))
+        #top_model.add(Dropout(0.3))
+        top_model.add(Dense(500, activation='relu'))
         top_model.add(Dense(self.last, activation='sigmoid'))
         
         # CONCATENATE THE TWO MODELS
@@ -62,6 +62,7 @@ class cnn_architecture():
         # Part 2 - Fitting the CNN to the images
 
         labels = train.columns.values
+        print('number of labels/ columns for y_col: ',len(labels))
         print('begin data pre-processing')
         train_datagen = ImageDataGenerator(rescale = 1./255., rotation_range=30,
                                            width_shift_range=0.2,
@@ -110,12 +111,12 @@ class cnn_architecture():
         except:
             classifier = self.create_model()
             print('--new model detected')
+            print(classifier.summary())
 
         opt = optimizers.SGD(lr=self.lr)
         classifier.compile(loss = l, metrics =['accuracy'], optimizer=opt)
         
         #callbacks
-        print(classifier.summary())
 
         #load data generators
         #train_set, val_set, test_set = self.image_gen(train, test)
@@ -124,7 +125,7 @@ class cnn_architecture():
         #setting step size
         TRAIN_STEPS_SIZE = train_set.n//train_set.batch_size
         VAL_STEPS_SIZE = val_set.n//val_set.batch_size
-        TEST_STEPS_SIZE = test_set.n//test_set.batch_size
+        #TEST_STEPS_SIZE = test_set.n//test_set.batch_size
         
         #early_stop = EarlyStopping(monitor='val_acc', patience=4, verbose=1)
         model_checkpoint = ModelCheckpoint('final_submission.h5',monitor = 'val_acc',verbose=1,
