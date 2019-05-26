@@ -1,11 +1,13 @@
 #!usr/bin/env python3
-
+import os
+os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID" 
+os.environ["CUDA_VISIBLE_DEVICES"] = "2"
 # Importing the Keras libraries and packages
 import numpy as np
 import pandas as pd
 import h5py
 from keras import regularizers
-from keras.models import Sequential, load_model
+from keras.models import Sequential, load_model, Model
 from keras import optimizers, applications
 from keras.layers import Convolution2D, MaxPooling2D, Flatten, Dense
 from keras.layers import Dropout, BatchNormalization, Input
@@ -20,9 +22,9 @@ def bin_to_dec(x):
 
 class cnn_architecture():
     def __init__(self, learn_rate, mode='binary', output_neurons=1):
-        self.h, self.w = 128, 128 #image height, width
+        self.h, self.w = 224, 224 #image height, width
         self.mode = mode
-        self.batch, self.epoc = 100, 5
+        self.batch, self.epoc = 50, 10
         self.lr = learn_rate
         self.last = output_neurons
 
@@ -43,9 +45,9 @@ class cnn_architecture():
         top_model = Sequential()
         top_model.add(Flatten(input_shape=model.output_shape[1:]))
         top_model.add(Dropout(0.5))
-        #top_model.add(Dense(500, activation='relu'))
-        #top_model.add(Dropout(0.3))
-        top_model.add(Dense(500, activation='relu'))
+        top_model.add(Dense(1000, activation='relu'))
+        top_model.add(Dropout(0.3))
+        top_model.add(Dense(18, activation='relu'))
         top_model.add(Dense(self.last, activation='sigmoid'))
         
         # CONCATENATE THE TWO MODELS
@@ -54,10 +56,10 @@ class cnn_architecture():
         # LOCK THE TOP CONV LAYERS        
         for layer in new_model.layers[:15]:
             layer.trainable = False
-
+        
         return new_model
 
-    def image_gen(self, train, test, train_dir=None, test_dir=None,mode='binary'):
+    def image_gen(self, train, test=None, train_dir=None, test_dir=None,mode='binary'):
         #rescale, split in train/ validation set, create batches
         # Part 2 - Fitting the CNN to the images
 
@@ -90,20 +92,12 @@ class cnn_architecture():
                                                  target_size = (self.h,self.w),
                                                  batch_size = self.batch,
                                                  shuffle = True)
-        '''
-        test_gen = test_datagen.flow_from_dataframe(dataframe = test,
-                                           directory = test_dir,
-                                           x_col = 'path',
-                                           target_size = (self.h, self.w),
-                                           batch_size = self.batch,
-                                           class_mode = None, shuffle = False)
-        '''
 
         print('ended data pre-processing')
         #return train_gen, val_gen, test_gen
         return train_gen, val_gen
 
-    def run(self, train, test, l='categorical_crossentropy'):
+    def run(self, train_df,num, l='categorical_crossentropy'):
         #stage = 1 or 2
         try:
             classifier = load_model('final_submission.h5')
@@ -116,45 +110,105 @@ class cnn_architecture():
         opt = optimizers.SGD(lr=self.lr)
         classifier.compile(loss = l, metrics =['accuracy'], optimizer=opt)
         
-        #callbacks
 
-        #load data generators
-        #train_set, val_set, test_set = self.image_gen(train, test)
-        train_set, val_set = self.image_gen(train,test)
+        epochs = 2; limit = 700;    
+        iterations = (len(train_df)//limit)+1
+
+        for i in range(epochs):
+            for j in range(2):
+                train_df = train_df.sample(frac=1).reset_index(drop=True) #if not reset_index, has issues with concatenation below
         
-        #setting step size
-        TRAIN_STEPS_SIZE = train_set.n//train_set.batch_size
-        VAL_STEPS_SIZE = val_set.n//val_set.batch_size
-        #TEST_STEPS_SIZE = test_set.n//test_set.batch_size
+            for m,k in enumerate(range(0, len(train_df), limit)):
+            
+                try:
+                    new_train_df = train_df.iloc[k:k+limit,:].reset_index(drop=True)
+                except:
+                    new_train_df = train_df.iloc[k:,:].reset_index(drop=True)
+            
+
+                print('Range of input {0} to {1}'.format(k, k+limit))
+                #the following section creates new columns for one hot encoding
+                encode = to_categorical(new_train_df['landmark_id'].tolist(),num).tolist()
+                onehot_df = pd.DataFrame(encode)
+                #print(encode[0].index(1), onehot_df[encode[0].index(1)].iloc[0])
+                #print(onehot_df.shape)
+           
+                #merge the columns together into 1 dataframe
+                f_train_df = pd.concat([new_train_df, onehot_df],axis=1, sort=False)
+                #print(new_train_df.columns.values) 
+                #print(f_train_df.shape)
+                #print(f_train_df.isnull().sum())
+                print('------Running epoch {0} iteration number {1} out of {2} iterations'.format(i+1,m+1,iterations))
+                #train_set, val_set, test_set = self.image_gen(train, test)
+                train_set, val_set = self.image_gen(f_train_df)
         
-        #early_stop = EarlyStopping(monitor='val_acc', patience=4, verbose=1)
-        model_checkpoint = ModelCheckpoint('final_submission.h5',monitor = 'val_acc',verbose=1,
+                #se ting step size
+                TRAIN_STEPS_SIZE = train_set.n//train_set.batch_size
+                VAL_STEPS_SIZE = val_set.n//val_set.batch_size
+        
+                #early_stop = EarlyStopping(monitor='val_acc', patience=4, verbose=1)
+                model_checkpoint = ModelCheckpoint('final_submission.h5',monitor = 'val_acc',verbose=1,
                                            save_best_only= True,mode='max')
         
-        classifier.fit_generator(generator = train_set,
+                classifier.fit_generator(generator = train_set,
                          steps_per_epoch = TRAIN_STEPS_SIZE,
                          epochs =self.epoc, callbacks=[model_checkpoint],
                          validation_data = val_set,
                          validation_steps = VAL_STEPS_SIZE)
+    
+                classifier.evaluate_generator(generator=val_set, steps=VAL_STEPS_SIZE)
+       
+       def testing(self,test):
+      
+            test_datagen = ImageDataGenerator(rescale = 1./255.)
+            test_gen = test_datagen.flow_from_dataframe(dataframe = test,
+                                           directory = test_dir,
+                                           x_col = 'path',
+                                           target_size = (self.h, self.w),
+                                           batch_size = self.batch,
+                                           class_mode = None, shuffle = False)
+ 
+            test_set.reset()
 
-        classifier.evaluate_generator(generator=val_set, steps=VAL_STEPS_SIZE)
-        '''
-        test_set.reset()
+            TEST_STEPS_SIZE = test_set.n//test_set.batch_size
+            loaded_model = load_model('final_submission.h5')
+            print('successfully loaded the model for test data')
 
-        loaded_model = load_model('final_submission.h5')
-        print('successfully loaded the model for test data')
+            #loaded_model.load_weights('classify.h5')
 
-        #loaded_model.load_weights('classify.h5')
+            pred=loaded_model.predict_generator(test_set,verbose=1, steps=TEST_STEPS_SIZE)
+            predicted_class_indices=np.argmax(pred,axis=1)
+            vals = []
+            for i in range(len(pred)):
+                val.append(pred[i][predictied_class_indices[i]])
 
-        pred=loaded_model.predict_generator(test_set,verbose=1, steps=TEST_STEPS_SIZE)
-        predicted_class_indices=np.argmax(pred,axis=1)
-        vals = []
-        for i in range(len(pred)):
-            val.append(pred[i][predictied_class_indices[i]])
+            print(predicted_class_indices[0], vals[0])
+            out = test
+            out['predictions'] = pred
+            out['final_predictions'] = out['predictions'].apply(lambda x: bin_to_dec(x))
+            out.to_csv('submission_output.csv',index=False)i
+        
 
-        print(predicted_class_indices[0], vals[0])
-        out = test
-        out['predictions'] = pred
-        out['final_predictions'] = out['predictions'].apply(lambda x: bin_to_dec(x))
-        out.to_csv('submission_output.csv',index=False)i
-        '''
+
+if __name__ == '__main__':
+
+    train_df = pd.read_csv('remaining_binary.csv') #train set with binary labels
+    train_df = train_df[['id','path','landmark_id']]
+
+    num = train_df['landmark_id'].nunique()
+    arch_2 = cnn_architecture(1e-3,mode='other', output_neurons=num) #using the same object for every mini-batch ensures that the same model trains
+    arch_2.run(train_df, num)
+
+
+    '''
+    #load data generators
+    test = pd.read_csv('output.csv')
+    t = 0.95
+    test['final_predictions'] = np.where(test['predictions']>=t, 1, 0)
+    test_df = test.loc[test['final_predictions']==1] #images predicted as landmarks in stage 1
+    #print(test_df['final_predictions'].value_counts())
+    print(len(test)-len(test_df))
+    #print(test_df.columns.values)
+
+    arch)2.testing(test_df)
+    '''
