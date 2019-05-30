@@ -1,7 +1,7 @@
 import os
 import pandas as pd
 os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID" 
-os.environ["CUDA_VISIBLE_DEVICES"] = "2"
+os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 from architect import cnn_architecture
 import tensorflow as tf
 import numpy as np
@@ -46,7 +46,7 @@ if __name__=='__main__':
     
     num = train_df['landmark_id'].nunique()
     
-    test = pd.read_csv('output.csv')
+    #test = pd.read_csv('output.csv')
     
     '''uncomment this when trying to make predictions on test dataset
     t = 0.95
@@ -58,7 +58,7 @@ if __name__=='__main__':
     '''
 
     arch_2 = cnn_architecture(1e-3,mode='other', output_neurons=num) #using the same object for every mini-batch ensures that the same model trains
-    epochs = 2; limit = 3000;
+    epochs = 2; limit = 700;
     
     iterations = (len(train_df)//limit)+1
     for i in range(epochs):
@@ -85,5 +85,5 @@ if __name__=='__main__':
             #print(new_train_df.columns.values) 
             #print(f_train_df.shape)
             #print(f_train_df.isnull().sum())
-            print('Running epoch {0} iteration number {1} out of {2} iterations'.format(i+1,m+1,iterations))
-            arch_2.run(f_train_df, test)
+            print('------Running epoch {0} iteration number {1} out of {2} iterations'.format(i+1,m+1,iterations))
+            arch_2.run(f_train_df)

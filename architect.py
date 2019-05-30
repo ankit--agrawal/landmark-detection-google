@@ -157,38 +157,6 @@ class cnn_architecture():
                          validation_steps = VAL_STEPS_SIZE)
     
                 classifier.evaluate_generator(generator=val_set, steps=VAL_STEPS_SIZE)
-       
-       def testing(self,test):
-      
-            test_datagen = ImageDataGenerator(rescale = 1./255.)
-            test_gen = test_datagen.flow_from_dataframe(dataframe = test,
-                                           directory = test_dir,
-                                           x_col = 'path',
-                                           target_size = (self.h, self.w),
-                                           batch_size = self.batch,
-                                           class_mode = None, shuffle = False)
- 
-            test_set.reset()
-
-            TEST_STEPS_SIZE = test_set.n//test_set.batch_size
-            loaded_model = load_model('final_submission.h5')
-            print('successfully loaded the model for test data')
-
-            #loaded_model.load_weights('classify.h5')
-
-            pred=loaded_model.predict_generator(test_set,verbose=1, steps=TEST_STEPS_SIZE)
-            predicted_class_indices=np.argmax(pred,axis=1)
-            vals = []
-            for i in range(len(pred)):
-                val.append(pred[i][predictied_class_indices[i]])
-
-            print(predicted_class_indices[0], vals[0])
-            out = test
-            out['predictions'] = pred
-            out['final_predictions'] = out['predictions'].apply(lambda x: bin_to_dec(x))
-            out.to_csv('submission_output.csv',index=False)i
-        
-
 
 if __name__ == '__main__':
 
@@ -199,16 +167,3 @@ if __name__ == '__main__':
     arch_2 = cnn_architecture(1e-3,mode='other', output_neurons=num) #using the same object for every mini-batch ensures that the same model trains
     arch_2.run(train_df, num)
 
-
-    '''
-    #load data generators
-    test = pd.read_csv('output.csv')
-    t = 0.95
-    test['final_predictions'] = np.where(test['predictions']>=t, 1, 0)
-    test_df = test.loc[test['final_predictions']==1] #images predicted as landmarks in stage 1
-    #print(test_df['final_predictions'].value_counts())
-    print(len(test)-len(test_df))
-    #print(test_df.columns.values)
-
-    arch)2.testing(test_df)
-    '''
