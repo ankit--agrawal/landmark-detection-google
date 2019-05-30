@@ -24,10 +24,10 @@ def new_run(test_df):
     except:
         print('---Couldn\'t find saved model. Debug and try again')
 
-    test_datagen = ImageGenerator(rescale = 1./255.)
+    test_datagen = ImageDataGenerator(rescale = 1./255.)
 
     test_gen = test_datagen.flow_from_dataframe(dataframe = test_df,
-            directory = None, x_col = 'path', clss_mode = None,
+            directory = None, x_col = 'path', class_mode = None,
             target_size = (224,224), batch_size = 700, shuffle=False)
 
     test_gen.reset()
@@ -50,11 +50,11 @@ def new_run(test_df):
 if __name__ == '__main__':
     #arch = cnn_architecture(0.5)
     test = pd.read_csv('output.csv')
-    t = 0.95
+    t = 0.97
     test['final_predictions'] = np.where(test['predictions'] >=t, 1, 0)
     test_df = test.loc[test['final_predictions']==1] #images predicted as landmarks in stage 1
     print(test_df['final_predictions'].value_counts())
     print(len(test)-len(test_df))
     print(test_df.columns.values)
 
-    #new_run(test_df)
+    new_run(test_df)
