@@ -24,7 +24,7 @@ class cnn_architecture():
     def __init__(self, learn_rate, mode='binary', output_neurons=1):
         self.h, self.w = 224, 224 #image height, width
         self.mode = mode
-        self.batch, self.epoc = 50, 10
+        self.batch, self.epoc = 1, 1
         self.lr = learn_rate
         self.last = output_neurons
 
@@ -99,6 +99,7 @@ class cnn_architecture():
 
     def run(self, train_df,num, l='categorical_crossentropy'):
         #stage = 1 or 2
+        val_accuracy = 100000
         try:
             classifier = load_model('final_submission.h5')
             print('---loading old model')
@@ -111,13 +112,16 @@ class cnn_architecture():
         classifier.compile(loss = l, metrics =['accuracy'], optimizer=opt)
         
 
-        epochs = 2; limit = 700;    
-        iterations = (len(train_df)//limit)+1
+        epochs = 5; limit = 700;
+        iterations = (len(train_df)//limit)+1 
 
         for i in range(epochs):
             for j in range(2):
                 train_df = train_df.sample(frac=1).reset_index(drop=True) #if not reset_index, has issues with concatenation below
         
+            train_df = train_df.drop_duplicates('landmark_id').reset_index(drop=True)
+            print('----length of new dataframe for 1 example per label=',len(train_df))
+
             for m,k in enumerate(range(0, len(train_df), limit)):
             
                 try:
@@ -141,21 +145,27 @@ class cnn_architecture():
                 print('------Running epoch {0} iteration number {1} out of {2} iterations'.format(i+1,m+1,iterations))
                 #train_set, val_set, test_set = self.image_gen(train, test)
                 train_set, val_set = self.image_gen(f_train_df)
-        
+                 
+                model_checkpoint = ModelCheckpoint('final_submission.h5',monitor = 'val_acc',verbose=1,
+                                           save_best_only= True,mode='max')
+
                 #se ting step size
                 TRAIN_STEPS_SIZE = train_set.n//train_set.batch_size
                 VAL_STEPS_SIZE = val_set.n//val_set.batch_size
-        
-                #early_stop = EarlyStopping(monitor='val_acc', patience=4, verbose=1)
-                model_checkpoint = ModelCheckpoint('final_submission.h5',monitor = 'val_acc',verbose=1,
-                                           save_best_only= True,mode='max')
         
                 classifier.fit_generator(generator = train_set,
                          steps_per_epoch = TRAIN_STEPS_SIZE,
                          epochs =self.epoc, callbacks=[model_checkpoint],
                          validation_data = val_set,
                          validation_steps = VAL_STEPS_SIZE)
-    
+                
+                #hist = classifier.history()
+                #print(hist)
+                '''
+                if hist['val_acc'] < val_accuracy:
+                    model_checkpoint = ModelCheckpoint('final_submission.h5',monitor = 'val_acc',verbose=1,
+                                           save_best_only= True,mode='max')
+                '''
                 classifier.evaluate_generator(generator=val_set, steps=VAL_STEPS_SIZE)
 
 if __name__ == '__main__':
@@ -166,4 +176,3 @@ if __name__ == '__main__':
     num = train_df['landmark_id'].nunique()
     arch_2 = cnn_architecture(1e-3,mode='other', output_neurons=num) #using the same object for every mini-batch ensures that the same model trains
     arch_2.run(train_df, num)
-
